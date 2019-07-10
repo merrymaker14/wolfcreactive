@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Wolf Creative</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css">
+        body { margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background: #111 }
+    </style>
+    <script src="phaser.min.js"></script>
+    <script>
+    const width = 200;
+    const height = 320;
+
+    var config = {
+        type: Phaser.AUTO,
+        width: width,
+        height: height,
+        physics: {
+            default: 'matter',
+            matter: {
+                gravity: {
+                  x: 0
+                }
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    var game = new Phaser.Game(config);
+
+    function preload ()
+    {
+        load = this.load;
+
+        this.load.image('background', 'assets/background-С‡1.png');
+
+        this.load.image('gate', 'assets/gate.png');
+        this.load.image('gatemirror', 'assets/gatemirror.png');
+
+        coinsDataList.forEach(function(coin) {
+            load.image(coin, generateCoinImageLink(coin));
+        });
+
+        this.load.image('topplayer', 'assets/topplayer.png');
+        this.load.image('topplayermirror', 'assets/topplayermirror.png');
+        this.load.image('bottomplayer', 'assets/bottomplayer.png');
+        this.load.image('bottomplayermirror', 'assets/bottomplayermirror.png');
+
+        this.load.image('button', 'assets/button.png');
+
+        this.load.image('up', 'assets/arrow-green.png');
+        this.load.image('low', 'assets/arrow-red.png');
+
+        this.load.json('shapes', 'assets/physics/shapes.json');
+
+        this.load.image('profit', 'assets/profit-value-background.png');
+    }
+
+    var coinsProfit = {
+      "etf_china": {
+          "plus": 100,
+          "minus": -50
+      },
+      "red_etf_china": {
+          "plus": 100,
+          "minus": -50
+      },
+      "etf_america": {
+          "plus": 100,
+          "minus": -40
+      },
+      "red_etf_america": {
+          "plus": 100,
+          "minus": -40
+      },
+      "bitcoin": {
+          "plus": 2000,
+          "minus": -30
+      },
+      "red_bitcoin": {
+          "plus": 2000,
+          "minus": -30
+      },
+      "dollar": {
+          "plus": 60,
+          "minus": -200
+      },
+      "red_dollar": {
+          "plus": 60,
+          "minus": -200
+      },
+      "eu": {
+          "plus": 80,
+          "minus": -40
+      },
+      "red_eu": {
+          "plus": 80,
+          "minus": -40
+      },
+      "gbr": {
+          "plus": 555,
+          "minus": -20
+      },
+      "red_gbr": {
+          "plus": 555,
+          "minus": -20
+      },
+      "rub": {
+          "plus": 666,
+          "minus": -50
+      },
+      "red_rub": {
+          "plus": 666,
+          "minus": -50
+      },
+      "yen": {
+          "plus": 222,
+          "minus": -30
+      },
+      "red_yen": {
+          "plus": 222,
+          "minus": -30
+      },
+      "etf_gold": {
+          "plus": 777,
+          "minus": -35
+      },
+      "red_etf_gold": {
+          "plus": 777,
+          "minus": -35
+      },
+      "etf_IT": {
+          "plus": 888,
+          "minus": -11
+      },
+      "red_etf_IT": {
+          "plus": 888,
+          "minus": -11
+      },
+      "etf_usa": {
+          "plus": 73,
+          "minus": -88
+      },
+      "red_etf_usa": {
+          "plus": 73,
+          "minus": -88
+      },
+      "etf_japan": {
+          "plus": 200,
+          "minus": -98
+      },
+      "red_etf_japan": {
+          "plus": 200,
+          "minus": -98
+      }
+    };
+    var coinsDataList = Object.keys(coinsProfit);
+
+    function generateCoinImageLink (name) {
+        var link = name + "_l.png";
+        return "assets/coins/" + link;
+    };
+
+    function minus (coinRandom) {
+        return getEquelsCoin(coinRandom, 'minus');
+    };
+
+    function getEquelsCoin (coinRandom, sign = 'plus') {
+        return coinsProfit[coinRandom][sign];
+    };
+
+    var gate2
+    var gate4;
+    var coin;
+    var coinRandom;
+    var player;
+    var shapes;
+    var button;
+    var count = 0;
+    var choice = 1;
+    var coinName;
+    var valueSign;
+    var info;
+
+    var matter;
+    var load;
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    function create ()
+    {
+        matter = this.matter;
+
+        this.add.image(100, 160, 'background');
+
+        this.add.image(100, 28, 'profit');
+        valueSign = this.add.image(150, 28, 'up');
+
+        this.matter.world.setBounds(0, 0, game.config.width, game.config.height);
+
+        shapes = this.cache.json.get('shapes');
+
+        this.matter.add.image(15, 94.5, 'gate', null, { shape: shapes.gate }).setStatic(true);
+
+        gate2 = this.matter.add.image(190, 94.5, 'gatemirror', null, { shape: shapes.gatemirror }).setStatic(true);
+
+        this.matter.add.image(15, 194.5, 'gate', null, { shape: shapes.gate }).setStatic(true);
+
+        gate4 = this.matter.add.image(190, 194.5, 'gatemirror', null, { shape: shapes.gatemirror }).setStatic(true);
+
+        coinRandom = coinsDataList[Math.floor(Math.random()*coinsDataList.length)];
+
+        coin = this.matter.add.image(12, 11, coinRandom);
+        coin.setCircle();
+
+        player = this.matter.add.image(100, 185, 'topplayer', null, { label: 'player' }).setStatic(true);
+
+        button = this.add.sprite(50, 250, 'button').setInteractive();
+
+        button2 = this.add.sprite(155, 250, 'button').setInteractive();
+        button2.flipX = true;
+
+        button3 = this.add.sprite(50, 300, 'button').setInteractive();
+        button3.flipY = true;
+
+        button4 = this.add.sprite(155, 300, 'button').setInteractive();
+        button4.flipX = true;
+        button4.flipY = true;
+
+        info = this.add.text(60, 18, '', { font: '18px Arial', fill: '#000000' });
+
+        button.on('pointerdown', function () {
+            player.destroy();
+            player = matter.add.image(100, 185, 'topplayer', null, { label: 'player' }).setStatic(true);
+            choice = 1;
+        });
+
+        button2.on('pointerdown', function () {
+            player.destroy();
+            player = matter.add.image(100, 185, 'topplayermirror', null, { label: 'player' }).setStatic(true);
+            choice = 2;
+        });
+
+        button3.on('pointerdown', function () {
+            player.destroy();
+            player = matter.add.image(100, 185, 'bottomplayer', null, { label: 'player' }).setStatic(true);
+            choice = 3;
+        });
+
+        button4.on('pointerdown', function () {
+            player.destroy();
+            player = matter.add.image(100, 185, 'bottomplayermirror', null, { label: 'player' }).setStatic(true);
+            choice = 4;
+        });
+
+        this.matter.world.on('collisionstart', function (event, player2, coin2) {
+                if (player2.label == 'player')
+                {
+                    if (coinName == 'coin1' && choice == 1)
+                    {
+                        coin.destroy();
+                        count += getEquelsCoin(coinRandom);
+                        valueSign.setTexture('up');
+                    }
+                    if (coinName == 'coin2' && choice == 2)
+                    {
+                        coin.destroy();
+                        count += getEquelsCoin(coinRandom);
+                        valueSign.setTexture('up');
+                    }
+                    if (coinName == 'coin3' && choice == 3)
+                    {
+                        coin.destroy();
+                        count += getEquelsCoin(coinRandom);
+                        valueSign.setTexture('up');
+                    }
+                    if (coinName == 'coin4' && choice == 4)
+                    {
+                        coin.destroy();
+                        count += getEquelsCoin(coinRandom);
+                        valueSign.setTexture('up');
+                    }
+
+                    if (count >= 15000)
+                    {
+                        game.scene.add('GameOver', GameOver, true, { x: width, y: height });;
+                    }
+                }
+        });
+
+        this.time.addEvent({
+            delay: 1250,
+            callback: destroyCoin,
+            loop: true
+        });
+
+        this.time.addEvent({
+            delay: 2500,
+            callback: spawn,
+            loop: true
+        });
+    }
+
+    function destroyCoin()
+    {
+        if (coin.active != false)
+        {
+            coin.destroy();
+            count += minus(coinRandom);
+            valueSign.setTexture('low');
+        }
+    }
+
+    function spawn ()
+    {
+        var place = Phaser.Math.Between(1, 4);
+
+        coinRandom = coinsDataList[Math.floor(Math.random()*coinsDataList.length)];
+
+        if (place == 1)
+        {
+            coin = matter.add.image(12, 11, coinRandom);
+            coinName = 'coin1';
+        }
+        if (place == 2)
+        {
+            coin = matter.add.image(190, 11, coinRandom);
+            coinName = 'coin2';
+        }
+        if (place == 3)
+        {
+            coin = matter.add.image(12, 120, coinRandom);
+            coinName = 'coin3';
+        }
+        if (place == 4)
+        {
+            coin = matter.add.image(190, 120, coinRandom);
+            coinName = 'coin4';
+        }
+        coin.setCircle();
+    }
+
+    function update ()
+    {
+        info.setText(count);
+    }
+
+    class GameOver extends Phaser.Scene {
+        constructor (config)
+        {
+            super(config);
+        }
+
+        preload ()
+        {
+            this.load.image('winscreen', 'assets/winscreen.png');
+        }
+
+        create (data)
+        {
+            this.add.image(data.x/2, data.y/2, 'winscreen');
+            info = this.add.text(60, 50, '15000', { font: '24px Arial', fill: '#000000' });
+        }
+    }
+    </script>
+</head>
+<body>
+</body>
+</html>
